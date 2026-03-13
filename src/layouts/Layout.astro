@@ -1,0 +1,126 @@
+---
+import { ViewTransitions } from "astro:transitions";
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<html lang="en" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title} | Ping Magazine</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <ViewTransitions />
+
+    <!-- Inline script for early theme toggle execution to avoid FOUC -->
+    <script is:inline>
+      const theme = (() => {
+        if (
+          typeof localStorage !== "undefined" &&
+          localStorage.getItem("theme")
+        ) {
+          return localStorage.getItem("theme");
+        }
+        if (window.matchMedia("(prefers-color-scheme: light)").matches) {
+          return "light";
+        }
+        return "dark"; // Default to dark mode as requested
+      })();
+
+      if (theme === "light") {
+        document.documentElement.classList.remove("dark");
+      } else {
+        document.documentElement.classList.add("dark");
+      }
+      window.localStorage.setItem("theme", theme || "dark");
+    </script>
+  </head>
+  <body
+    class="min-h-screen flex flex-col pt-24 pb-12 px-6 md:px-12 lg:px-24 antialiased selection:bg-zinc-800 selection:text-zinc-50 dark:selection:bg-zinc-200 dark:selection:text-zinc-900"
+  >
+    <nav
+      class="fixed top-0 left-0 right-0 z-50 px-6 py-4 md:px-12 lg:px-24 flex justify-between items-center glass border-b-0 border-x-0 border-t-0 bg-opacity-80 dark:bg-zinc-950/80"
+    >
+      <a
+        href="/"
+        class="text-xl font-bold tracking-tight hover:opacity-80 transition-opacity"
+      >
+        Ping Magazines
+      </a>
+      <button
+        id="theme-toggle"
+        class="p-2 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors focus:outline-none focus:ring-2 focus:ring-zinc-400"
+        aria-label="Toggle Dark Mode"
+      >
+        <!-- Sun icon for dark mode (to switch to light) -->
+        <svg
+          id="theme-toggle-sun-icon"
+          class="w-5 h-5 hidden dark:block"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+          ></path>
+        </svg>
+        <!-- Moon icon for light mode (to switch to dark) -->
+        <svg
+          id="theme-toggle-moon-icon"
+          class="w-5 h-5 block dark:hidden"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+          ></path>
+        </svg>
+      </button>
+    </nav>
+
+    <main class="flex-grow max-w-7xl mx-auto w-full">
+      <slot />
+    </main>
+
+    <script>
+      // Setup theme toggle listener, using Astro's event for view transitions
+      function setupThemeToggle() {
+        const themeToggleBtn = document.getElementById("theme-toggle");
+
+        if (!themeToggleBtn) return;
+
+        // Remove old listener to avoid duplicates
+        const newBtn = themeToggleBtn.cloneNode(true);
+        themeToggleBtn.parentNode?.replaceChild(newBtn, themeToggleBtn);
+
+        newBtn.addEventListener("click", () => {
+          document.documentElement.classList.toggle("dark");
+          const isDark = document.documentElement.classList.contains("dark");
+          localStorage.setItem("theme", isDark ? "dark" : "light");
+        });
+      }
+
+      // Run on initial load and after view transitions
+      document.addEventListener("astro:page-load", setupThemeToggle);
+    </script>
+  </body>
+</html>

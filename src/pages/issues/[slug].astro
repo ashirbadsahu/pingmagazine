@@ -1,0 +1,95 @@
+---
+import { getCollection } from 'astro:content';
+import { Image } from 'astro:assets';
+import Layout from '../../layouts/Layout.astro';
+
+export async function getStaticPaths() {
+  const magazines = await getCollection('magazines');
+  return magazines.map((magazine) => ({
+    params: { slug: magazine.slug },
+    props: { magazine },
+  }));
+}
+
+const { magazine } = Astro.props;
+const { Content } = await magazine.render();
+
+// Process title
+const displayTitle = magazine.data.title.replace(/_/g, ' ').replace(/issue/i, 'Issue ').toUpperCase();
+
+// Astro's base mechanism for github pages:
+const pdfUrl = import.meta.env.BASE_URL === '/' 
+  ? magazine.data.pdfUrl 
+  : `${import.meta.env.BASE_URL}${magazine.data.pdfUrl.startsWith('/') ? magazine.data.pdfUrl.slice(1) : magazine.data.pdfUrl}`;
+---
+
+<Layout title={displayTitle}>
+  <div class="py-8 md:py-16">
+    <div class="mb-12">
+      <a href="/" class="inline-flex items-center text-sm font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors group">
+        <span class="p-2 rounded-full border border-zinc-200 dark:border-zinc-800 mr-3 group-hover:bg-zinc-100 dark:group-hover:bg-zinc-800 transition-colors">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+        </span>
+        Back to Archive
+      </a>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-start">
+      <div class="relative glass rounded-2xl overflow-hidden shadow-2xl border border-zinc-200 dark:border-white/10 flex justify-center bg-zinc-100/50 dark:bg-zinc-900/50 p-4 md:p-8">
+        <Image
+          src={magazine.data.cover}
+          alt={displayTitle}
+          class="w-full max-w-md h-auto object-contain rounded drop-shadow-2xl"
+          transition:name={`cover-${magazine.slug}`}
+        />
+      </div>
+
+      <div class="flex flex-col justify-center h-full space-y-10">
+        <div>
+          <h1 class="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight mb-4">
+            {displayTitle}
+          </h1>
+          {magazine.data.publishDate ? (
+            <p class="text-xl text-zinc-500 dark:text-zinc-400 font-mono tracking-wider">
+              {magazine.data.publishDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+            </p>
+          ) : (
+             <p class="text-xl text-zinc-500 dark:text-zinc-400 font-mono tracking-wider">
+              ARCHIVED ISSUE
+            </p>
+          )}
+          <div class="prose prose-zinc dark:prose-invert max-w-none text-lg mt-8 text-zinc-600 dark:text-zinc-300">
+            <Content />
+          </div>
+        </div>
+
+        <div class="pt-10 border-t border-zinc-200 dark:border-zinc-800">
+          <a
+            href={pdfUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="group inline-flex justify-between items-center w-full sm:w-auto px-8 py-5 bg-zinc-900 text-zinc-50 dark:bg-zinc-50 dark:text-zinc-950 font-semibold rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-zinc-400 dark:focus:ring-zinc-600 shadow-xl hover:shadow-2xl"
+          >
+            <span class="flex items-center text-lg">
+                <svg class="w-5 h-5 mr-3 mb-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Read Full PDF
+            </span>
+            <svg class="w-5 h-5 ml-6 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </a>
+          <p class="mt-5 text-sm text-zinc-500 flex items-center">
+            <svg class="w-4 h-4 mr-2 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Opens in a new tab. For the best experience, view on a larger screen.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>
