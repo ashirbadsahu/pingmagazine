@@ -8,6 +8,6 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()]
   },
-  site: 'https://madebyping.github.io',
+  site: 'https://magazine.pingiiit.org',
   base: '/magazines',
 });
