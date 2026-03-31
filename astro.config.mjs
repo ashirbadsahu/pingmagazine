@@ -9,5 +9,5 @@ export default defineConfig({
     plugins: [tailwindcss()]
   },
   site: 'https://magazine.pingiiit.org',
-  base: '/magazines',
+  base: '/',
 });
