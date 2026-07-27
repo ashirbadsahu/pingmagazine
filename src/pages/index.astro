@@ -4,6 +4,45 @@ import { Image } from "astro:assets";
 import Layout from "../layouts/Layout.astro";
 
 const allMagazines = await getCollection("magazines");
+
+function parseDate(dateStr?: string, publishDate?: Date): { sortKey: number; displayDate: string } {
+  if (dateStr) {
+    const parts = dateStr.split("/");
+    if (parts.length === 2) {
+      const month = parseInt(parts[0], 10);
+      const year = parseInt(parts[1], 10);
+      if (!isNaN(month) && !isNaN(year)) {
+        const dateObj = new Date(year, month - 1, 1);
+        const displayDate = dateObj.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+        });
+        return {
+          sortKey: year * 100 + month,
+          displayDate,
+        };
+      }
+    }
+  }
+  if (publishDate) {
+    const d = new Date(publishDate);
+    return {
+      sortKey: d.getFullYear() * 100 + (d.getMonth() + 1),
+      displayDate: d.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+      }),
+    };
+  }
+  return { sortKey: 0, displayDate: "ARCHIVED" };
+}
+
+const sortedMagazines = allMagazines
+  .map((mag) => ({
+    mag,
+    dateInfo: parseDate(mag.data.date, mag.data.publishDate),
+  }))
+  .sort((a, b) => b.dateInfo.sortKey - a.dateInfo.sortKey);
 ---
 
 <Layout title="Archive">
@@ -25,7 +64,7 @@ const allMagazines = await getCollection("magazines");
       class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 md:gap-12"
     >
       {
-        allMagazines.map((magazine) => (
+        sortedMagazines.map(({ mag: magazine, dateInfo }) => (
           <a
             href={`/issues/${magazine.slug}`}
             class="group block relative no-underline outline-none focus:ring-4 focus:ring-zinc-400 rounded-2xl transition-all duration-500 transform hover:-translate-y-2"
@@ -62,19 +101,9 @@ const allMagazines = await getCollection("magazines");
                   .replace(/_/g, " ")
                   .replace(/issue/i, "Issue ")}
               </h2>
-              {magazine.data.publishDate && (
-                <p class="text-sm text-zinc-500 dark:text-zinc-500 font-mono uppercase tracking-wider">
-                  {magazine.data.publishDate.toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "long",
-                  })}
-                </p>
-              )}
-              {!magazine.data.publishDate && (
-                <p class="text-sm text-zinc-500 dark:text-zinc-500 font-mono tracking-wider flex items-center">
-                  ARCHIVED
-                </p>
-              )}
+              <p class="text-sm text-zinc-500 dark:text-zinc-500 font-mono uppercase tracking-wider">
+                {dateInfo.displayDate}
+              </p>
             </div>
           </a>
         ))

@@ -4,6 +4,7 @@ const magazineCollection = defineCollection({
     type: 'content',
     schema: ({ image }) => z.object({
         title: z.string(),
+        date: z.string().optional(),
         publishDate: z.coerce.date().optional(),
         // Astro will optimize this image for fast loading
         cover: image(),
